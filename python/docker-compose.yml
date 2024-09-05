@@ -1,0 +1,38 @@
+
+services:
+  # It creates a network for the services
+  base:
+    image: registry.k8s.io/pause:3.8
+
+  postgres:
+    image: ghcr.io/sergelogvinov/postgresql:15.6
+    shm_size: 1g
+    # It uses the network created by the base service
+    network_mode: "service:base"
+    # Disable fsync to speed up the tests
+    command: -c fsync=off
+    # Default user and password
+    environment:
+      - POSTGRES_USER=myservice
+      - POSTGRES_PASSWORD=myservice
+      - POSTGRES_DB=myservice
+
+    # Docker will wait for the service to be ready before continuing (depends_on)
+    healthcheck:
+      test: ["CMD-SHELL", "psql -U myservice -d myservice -c 'SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  unittest:
+    build:
+      context: .
+      target: release
+      dockerfile: Dockerfile
+    # It uses the network created by the base service
+    network_mode: "service:base"
+    # Run the container, than we can run the tests inside the container
+    command: /pause
+    depends_on:
+      - postgres

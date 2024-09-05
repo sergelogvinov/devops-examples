@@ -10,6 +10,11 @@ All ideas are working for mono-repo projects and for microservices.
 - [Continuous Integration](#continuous-integration)
 - [Tools](#tools)
 
+Project examples:
+
+- [Golang](golang/)
+- [Python](python/)
+
 ## Build projects
 
 Since `docker` is the most popular containerization tool, I recommend using it for building projects. It's easy to use, and it's widely supported. Docker has alternatives like Podman, but most of the code are compatible with Docker. I prefer the `BuildKit` extension for Docker because it's faster and more efficient than the standard Docker build process. Also, it's supported multi architecture builds.

@@ -1,0 +1,15 @@
+.vscode/
+.github/
+.git/
+**/.gitignore
+#
+bin/
+docs/
+docker-compose.yml
+Dockerfile
+
+# other
+*.md
+*.yml
+*.zip
+*.sql
