@@ -1,5 +1,14 @@
 # Build python project
 
+The Dockerfile has multi-stage build to build the image efficiently.
+- `base` stage installs the required basic dependencies and configures the locale.
+- `builder` stage installs the required dependencies for building the project.
+- `release` stage copies the required files and python packages to the final image.
+
+Read comments in the [Dockerfile](Dockerfile) for more details.
+
+## Make commands
+
 Using make command:
 
 ```shell

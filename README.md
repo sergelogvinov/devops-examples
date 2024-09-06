@@ -38,16 +38,18 @@ FROM registry.k8s.io/pause:3.8 AS pause
 
 FROM python AS base
 
+# Basic requirements for the environment
 ENV DEBIAN_FRONTEND=noninteractive TERM=xterm-color LC_ALL=C.UTF-8 LANG=C.UTF-8
 ENV PYTHONUNBUFFERED=1 POETRY_VIRTUALENVS_CREATE=false
 
+# Install basic packages and create a non-root user
 RUN --mount=type=cache,id=apt-cache-python,target=/var/cache/apt,sharing=locked \
     LC_ALL=C apt-get update -y && \
     LC_ALL=C apt-get install -y --no-install-recommends locales ca-certificates mime-support make libpq5 vim gettext procps && \
     sed -i 's/^# *\(en_US.UTF-8\)/\1/' /etc/locale.gen && LC_ALL=C locale-gen && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* /tmp/* && \
-    useradd -ms /bin/bash --uid 5000 -d /app app
+    useradd -ms /bin/bash --uid 5000 -d /www/app app
 
 ########################################
 #
@@ -56,13 +58,17 @@ RUN --mount=type=cache,id=apt-cache-python,target=/var/cache/apt,sharing=locked 
 
 FROM base AS builder
 
+# Dependencies for building the python packages
 RUN --mount=type=cache,id=apt-cache-python,target=/var/cache/apt,sharing=locked \
     apt-get update && apt-get install -y --no-install-recommends build-essential python3-dev libpq-dev git && \
+    pip3 install poetry && \
     rm -rf /var/lib/apt/lists/* /tmp/*
 
 WORKDIR /www/app
 
-COPY --chown=app:app ["app/poetry.lock","app/pyproject.toml","/www/app/"]
+# Install the project dependencies
+# They don't change often, so we can cache them
+COPY --chown=app:app ["myservice/poetry.lock","myservice/pyproject.toml","/www/app/"]
 RUN --mount=type=cache,id=poetry,target=/root/.cache poetry install --no-interaction --no-root && \
     rm -rf /tmp/*
 
@@ -75,10 +81,15 @@ FROM base AS release
 
 ENV PYTHONPATH=/www/shared-apps PATH=/home/app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
+# Pause binary for run it for testing purposes
+# It shuts down immediately, and has small size
 COPY --from=pause /pause /pause
+# Python packages
 COPY --from=builder --chown=app:app /usr/local /usr/local
-COPY                --chown=app:app app/       /www/app/
+# Project files
+COPY                --chown=app:app myservice/ /www/app/
 
+# Switch to the non-root user
 USER app
 WORKDIR /www/app
 
@@ -182,6 +193,7 @@ docker compose -f docker-compose.yml exec unittest my-project-test
 * [Docker](https://www.docker.com/)
 * [BuildKit](https://github.com/moby/buildkit)
 * [Docker Compose](https://docs.docker.com/compose/)
+* [Dive](https://github.com/wagoodman/dive)
 * [Taskfile](https://taskfile.dev/)
 * [Makefile](https://www.gnu.org/software/make/)
 
