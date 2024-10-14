@@ -1,0 +1,17 @@
+.vscode/
+.github/
+.git/
+**/.gitignore
+**/.gitkeep
+#
+.dockerignore
+docker-compose.yml
+Dockerfile
+README.md
+#
+.env.example
+#
+/public/bundles/
+/var/
+/vendor/
+composer.phar

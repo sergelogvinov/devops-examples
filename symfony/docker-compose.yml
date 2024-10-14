@@ -1,0 +1,30 @@
+
+services:
+  # It creates a network for the services
+  base:
+    image: registry.k8s.io/pause:3.8
+    ports:
+      - "8080:8080"
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    user: "0:0"
+    # It uses the network created by the base service
+    network_mode: "service:base"
+    # Run the container
+    command: ["nginx", "-g", "daemon off;"]
+    depends_on:
+      - base
+
+  php-fpm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # It uses the network created by the base service
+    network_mode: "service:base"
+    # Run the container
+    command: ["/usr/local/sbin/php-fpm", "-F"]
+    depends_on:
+      - base

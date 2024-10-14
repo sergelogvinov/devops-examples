@@ -14,6 +14,7 @@ Project examples:
 
 - [Golang](golang/)
 - [Python](python/)
+- [Symfony](symfony/) PHP-fpm, Nginx
 
 ## Build projects
 
@@ -185,7 +186,7 @@ Build and run the tests, will look like this:
 ```shell
 docker compose -f docker-compose.yml build
 docker compose -f docker-compose.yml up -d --wait
-docker compose -f docker-compose.yml exec unittest my-project-test
+docker compose -f docker-compose.yml exec test my-project-test
 ```
 
 ## Tools
@@ -201,3 +202,7 @@ Self hosted CI/CD agents/conrollers:
 
 * [TeamCity](https://github.com/sergelogvinov/containers/tree/main/teamcity)
 * [Githab Actions](https://github.com/sergelogvinov/containers/tree/main/github-actions-runner)
+
+## Other resources
+
+* [Understanding Docker](https://dev.to/aurelievache/understanding-docker-part-1-retrieve-pull-images-3ccn)
