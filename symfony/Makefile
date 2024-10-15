@@ -3,6 +3,7 @@
 REGISTRY ?= ghcr.io
 USERNAME ?= sergelogvinov
 OCIREPO ?= $(REGISTRY)/$(USERNAME)
+PROJECT ?= symfony
 PLATFORM ?= linux/arm64,linux/amd64
 PUSH ?= false
 
@@ -29,7 +30,6 @@ To build this project locally, you must have the following installed:
 
 - git
 - make
-- python
 - docker
 - docker-compose
 
@@ -48,7 +48,7 @@ help: ## This help menu
 
 .PHONY: clean
 clean: ## Clean
-	rm -rf bin .cache
+	rm -rf vendor
 
 .PHONY: build
 build:
@@ -84,7 +84,7 @@ image-%:
 	docker buildx build $(BUILD_ARGS) \
 		--build-arg TAG=$(TAG) \
 		--build-arg SHA=$(SHA) \
-		-t $(OCIREPO)/$*:$(TAG) \
+		-t $(OCIREPO)/$(PROJECT):$(TAG) \
 		--target $* \
 		-f Dockerfile .
 

@@ -27,7 +27,7 @@ Think of the images layers as a cache. If you change the code, the layer with th
 Here's a simple Dockerfile that you can use to build your projects:
 
 ```Dockerfile
-# syntax = docker/dockerfile:1.8
+# syntax = docker/dockerfile:1.10
 ########################################
 
 FROM registry.k8s.io/pause:3.8 AS pause

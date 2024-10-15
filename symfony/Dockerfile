@@ -4,10 +4,18 @@
 FROM composer:2.8.1 AS composer
 
 ########################################
+#
+# Base image
+#
 
 FROM php:8.3-fpm-alpine3.20 AS base
 
-# Install dependencies
+# Install common dependencies
+#
+# Nginx is required to route requests to the PHP-FPM server
+# Curl for debugging purposes you can remove it
+# All other packages are required to run PHP extensions
+#
 RUN apk add --no-cache tzdata nginx curl \
     bash vim zip unzip icu-libs \
     c-client make ca-certificates imap gmp gettext libssh2 yaml \
@@ -15,7 +23,14 @@ RUN apk add --no-cache tzdata nginx curl \
     oniguruma libxslt libpq vips \
     gmp libzip libxml2 freetds
 
-# Install php dependencies
+########################################
+#
+# Build the project with development dependencies
+#
+
+FROM base AS builder
+
+# Install php dependencies to build extensions
 RUN apk add --no-cache --virtual .build_deps \
     libpng-dev libwebp-dev libjpeg-turbo-dev freetype-dev imap-dev \
     linux-headers oniguruma-dev libxslt-dev postgresql-dev vips-dev \
@@ -47,10 +62,13 @@ RUN apk add --no-cache --virtual .build_deps \
     apk del --purge .build_deps && rm -rf /var/cache/apk/*
 
 # Install composer
+#
+# Composer is required to install the project dependencies
+# It does not need to be installed in the final image
+#
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
-COPY config/php.ini ${PHP_INI_DIR}/conf.d/99-php.ini
-COPY config/nginx.conf /etc/nginx/http.d/default.conf
 
+# Use unprivileged user to build environment
 USER www-data
 
 ENV WORKDIR=/var/symfony
@@ -60,8 +78,32 @@ COPY --chown=www-data:www-data ["composer.json", "composer.lock", "symfony.lock"
 COPY --chown=www-data:www-data ["bin/", "${WORKDIR}/bin/"]
 RUN composer install --no-interaction --no-scripts --optimize-autoloader
 
+########################################
+#
+# The final release image
+#
+
+FROM base AS release
+
+# Copy necessary files
+COPY config/php.ini ${PHP_INI_DIR}/conf.d/99-php.ini
+COPY config/nginx.conf /etc/nginx/http.d/default.conf
+
+# Use unprivileged user to run the application
+USER www-data
+
+ENV WORKDIR=/var/symfony
+WORKDIR ${WORKDIR}
+
+# Copy the project files
+#
+# Copy the vendor directory from the builder image, it has all the dependencies
+# Copy the project files from the current directory
+#
+COPY --chown=www-data:www-data --from=builder ["${WORKDIR}/vendor/", "${WORKDIR}/vendor/"]
 COPY --chown=www-data:www-data [".", "${WORKDIR}"]
 
+# Default environment for the symfony application
 ARG APP_ENV=dev
 ENV APP_ENV=${APP_ENV}
 

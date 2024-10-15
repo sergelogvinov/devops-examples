@@ -10,6 +10,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: release
     user: "0:0"
     # It uses the network created by the base service
     network_mode: "service:base"
@@ -22,6 +23,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: release
     # It uses the network created by the base service
     network_mode: "service:base"
     # Run the container
