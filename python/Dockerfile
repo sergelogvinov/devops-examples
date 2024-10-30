@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile:1.8
+# syntax = docker/dockerfile:1.10
 ########################################
 
 FROM registry.k8s.io/pause:3.8 AS pause
@@ -15,7 +15,8 @@ ENV DEBIAN_FRONTEND=noninteractive TERM=xterm-color LC_ALL=C.UTF-8 LANG=C.UTF-8
 ENV PYTHONUNBUFFERED=1 POETRY_VIRTUALENVS_CREATE=false
 
 # Install basic packages and create a non-root user
-RUN --mount=type=cache,id=apt-cache-python,target=/var/cache/apt,sharing=locked \
+ARG TARGETARCH
+RUN --mount=type=cache,id=apt-cache-python-$TARGETARCH,target=/var/cache/apt,sharing=locked \
     LC_ALL=C apt-get update -y && \
     LC_ALL=C apt-get install -y --no-install-recommends locales ca-certificates mime-support make libpq5 vim gettext procps && \
     sed -i 's/^# *\(en_US.UTF-8\)/\1/' /etc/locale.gen && LC_ALL=C locale-gen && \
@@ -30,9 +31,14 @@ RUN --mount=type=cache,id=apt-cache-python,target=/var/cache/apt,sharing=locked 
 
 FROM base AS builder
 
+# Create a cache for specific build architecture
+ARG TARGETARCH
+# Make possible to create new cache, if the pip packages have errors or need to be updated
+ARG EPOCH="0"
 # Dependencies for building the python packages
-RUN --mount=type=cache,id=apt-cache-python,target=/var/cache/apt,sharing=locked \
-    apt-get update && apt-get install -y --no-install-recommends build-essential python3-dev libpq-dev git && \
+RUN --mount=type=cache,id=apt-cache-python-$TARGETARCH,target=/var/cache/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends build-essential python3-dev libpq-dev git
+RUN --mount=type=cache,id=pip-$TARGETARCH-$EPOCH,target=/root/.cache/pip \
     pip3 install poetry && \
     rm -rf /var/lib/apt/lists/* /tmp/*
 

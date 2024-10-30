@@ -189,6 +189,53 @@ docker compose -f docker-compose.yml up -d --wait
 docker compose -f docker-compose.yml exec test my-project-test
 ```
 
+### GitHub Actions
+
+Example of the GitHub Actions workflow:
+
+```yaml
+name: Build
+on:
+  # Run the workflow on push to the main branch
+  push:
+    branches:
+      - main
+
+jobs:
+  build-publish:
+    name: "Build image and publish"
+    # Limit the time for the job, sometimes something goes wrong
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    permissions:
+      # Define the permissions, packages needs to push the images to the github registry
+      contents: read
+      packages: write
+
+    # Some steps are grouped, it helps to understand the workflow
+    # Checkout process, prepare the environment, build and push the images
+    steps:
+      # Checkout the code to the github runner
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # For multi architecture builds, we need to set up QEMU and docker buildx
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up docker buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build and push the images
+      #  We run Makefile, which has the build and push commands
+      #  The env PUSH=true, tells the Makefile to push the image results to the registry
+      #  Do not forget to set timeout for the job
+      - name: Build and push
+        timeout-minutes: 10
+        run: make images
+        env:
+          PUSH: "true"
+```
+
 ## Tools
 
 * [Docker](https://www.docker.com/)
@@ -206,3 +253,4 @@ Self hosted CI/CD agents/conrollers:
 ## Other resources
 
 * [Understanding Docker](https://dev.to/aurelievache/understanding-docker-part-1-retrieve-pull-images-3ccn)
+* [Dockerfile reference](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md)
